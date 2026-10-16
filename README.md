@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛰️ SENTINELA
+#  SENTINELA
 
 ### Primeiro prove o gerador. Depois acuse o alvo.
 ### *Prove the load generator first. Then blame the target.*
