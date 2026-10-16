@@ -1,0 +1,26 @@
+{
+  "name": "sandbox-banco-gargalo",
+  "model": "open",
+  "target": { "base_url": "http://127.0.0.1:18080", "app_version": "sandbox-1" },
+  "script_version": "v1",
+  "canary_url": "http://127.0.0.1:18080/health",
+  "endpoints": [
+    { "name": "health",  "path": "/health",  "layer": "edge", "weight": 20 },
+    { "name": "app",     "path": "/api/app?t={tenant}", "layer": "app",  "weight": 30 },
+    { "name": "db",      "path": "/api/db?t={tenant}",  "layer": "db",   "weight": 50 }
+  ],
+  "tenants": { "count": 30, "distribution": "zipf", "users_per_tenant": 10 },
+  "stages": [
+    { "name": "ramp-up",      "duration": 45, "target": 1200 },
+    { "name": "steady-state", "duration": 15, "target": 1200 },
+    { "name": "ramp-down",    "duration": 5,  "target": 0 }
+  ],
+  "start_value": 20,
+  "timeout": 5,
+  "max_vus": 1500,
+  "workers": [ { "local": 2, "region": "local" } ],
+  "criteria": {
+    "pass":  { "p95_ms": 300, "error_rate": 0.01 },
+    "abort": { "error_rate": 0.9, "window_s": 10, "generator_compromised_frac": 1.0, "canary_failures": 3 }
+  }
+}

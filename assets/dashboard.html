@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sentinela · Perícia de carga</title>
+<style>
+:root{--bg:#0e1116;--panel:#161b22;--panel2:#1d242d;--line:#2a323d;--tx:#e6edf3;--mut:#8b98a8;
+--ok:#3fb68b;--warn:#e3a008;--bad:#f0616d;--info:#5aa2ff;--demo:#b88cff;
+--c1:#5aa2ff;--c2:#e3a008;--c3:#3fb68b;--c4:#f0616d;--c5:#b88cff;--c6:#4cc9d6;--c7:#ff8fb1;--c8:#a3b18a;}
+@media (prefers-color-scheme:light){:root:not([data-theme=dark]){--bg:#f5f7fa;--panel:#fff;--panel2:#eef2f6;--line:#d5dce5;--tx:#17202b;--mut:#5c6b7c;
+--ok:#12805c;--warn:#a86a00;--bad:#c2303d;--info:#1d60c4;--demo:#7a45d1;--c1:#1d60c4;--c2:#a86a00;--c3:#12805c;--c4:#c2303d;--c5:#7a45d1;--c6:#0f7f8c;--c7:#c23a6b;--c8:#667a50}}
+:root[data-theme=light]{--bg:#f5f7fa;--panel:#fff;--panel2:#eef2f6;--line:#d5dce5;--tx:#17202b;--mut:#5c6b7c;--ok:#12805c;--warn:#a86a00;--bad:#c2303d;--info:#1d60c4;--demo:#7a45d1;--c1:#1d60c4;--c2:#a86a00;--c3:#12805c;--c4:#c2303d;--c5:#7a45d1;--c6:#0f7f8c;--c7:#c23a6b;--c8:#667a50}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:1240px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0}h2{font-size:15px;margin:0 0 10px;letter-spacing:.2px}h3{font-size:13px;margin:14px 0 6px;color:var(--mut);font-weight:600}
+.sub{color:var(--mut);font-size:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0}
+.grid{display:grid;gap:12px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g6{grid-template-columns:repeat(6,1fr)}
+@media(max-width:900px){.g2,.g3,.g4,.g6{grid-template-columns:1fr 1fr}}@media(max-width:560px){.g2,.g3,.g4,.g6{grid-template-columns:1fr}}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:.4px;border:1px solid currentColor}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}.info{color:var(--info)}.demo{color:var(--demo)}.mut{color:var(--mut)}
+.banner{border:2px dashed var(--demo);color:var(--demo);padding:10px 14px;border-radius:10px;font-weight:700;text-align:center;margin:12px 0}
+.verdict{border-left:6px solid var(--mut)}
+.verdict.GERADOR_COMPROMETIDO{border-color:var(--warn)}.verdict.CONECTIVIDADE_PROVAVEL{border-color:var(--warn)}.verdict.ALVO_SATURADO_CONFIRMADO,.verdict.ALVO_SATURADO_PROVAVEL{border-color:var(--bad)}.verdict.SEM_SATURACAO{border-color:var(--ok)}.verdict.INCONCLUSIVO,.verdict.ABORTADO{border-color:var(--info)}
+.big{font-size:19px;font-weight:700;line-height:1.3}
+.kpi{background:var(--panel2);border-radius:8px;padding:10px 12px}.kpi b{display:block;font-size:20px}.kpi span{font-size:11px;color:var(--mut)}
+table{border-collapse:collapse;width:100%;font-size:12.5px}th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--mut);font-weight:600;font-size:11.5px}
+.scroll{overflow-x:auto}
+.bar{height:8px;border-radius:4px;background:var(--panel2);overflow:hidden}.bar i{display:block;height:100%}
+.sus{display:grid;grid-template-columns:190px 1fr 40px;gap:10px;align-items:center;margin:7px 0}
+@media(max-width:560px){.sus{grid-template-columns:110px 1fr 34px}}
+details{margin:4px 0}summary{cursor:pointer;color:var(--mut);font-size:12px}
+ul{margin:6px 0;padding-left:20px}li{margin:3px 0}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin:2px 0 4px}
+.legend span b{font-variant-numeric:tabular-nums}
+svg text{fill:var(--mut);font-size:10.5px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+select,button{background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:6px;padding:4px 8px;font:inherit;cursor:pointer}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.rec{display:grid;grid-template-columns:28px 1fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.rec .n{width:24px;height:24px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;font-weight:700;font-size:12px}
+.tag{font-size:10.5px;padding:1px 7px;border-radius:5px;background:var(--panel2);color:var(--mut);margin-left:6px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+const M = /*__DATA__*/null;
+/* ===== utilidades ===== */
+const $=(s,r=document)=>r.querySelector(s);
+function h(tag,attrs,...kids){const e=document.createElement(tag);for(const k in (attrs||{})){if(k==='class')e.className=attrs[k];else if(k==='html')e.innerHTML=attrs[k];else if(k.startsWith('on'))e.addEventListener(k.slice(2),attrs[k]);else e.setAttribute(k,attrs[k]);}
+ for(const c of kids.flat()){if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(c));}return e;}
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f1=v=>v==null?'—':(Math.abs(v)>=100?Math.round(v).toLocaleString('pt-BR'):(+v).toLocaleString('pt-BR',{maximumFractionDigits:1}));
+const fms=v=>v==null?'—':(v>=1000?(v/1000).toFixed(2)+' s':f1(v)+' ms');
+const fpc=v=>v==null?'—':(v*100).toLocaleString('pt-BR',{maximumFractionDigits:2})+'%';
+const fbps=v=>v==null?'—':(v>=1e6?(v*8/1e6).toFixed(1)+' Mb/s':(v*8/1e3).toFixed(0)+' kb/s');
+const col=i=>`var(--c${(i%8)+1})`;
+const KIND={measured:['MEDIDO','ok','●'],estimated:['ESTIMADO','warn','◐'],demo:['DEMO','demo','◇'],ingested:['IMPORTADO','info','↧']};
+function chip(kind){const k=KIND[(kind||'').split('(')[0]]||KIND.measured;return h('span',{class:'chip '+k[1],title:kind},k[2]+' '+k[0]);}
+const V=M.verdict||{},R=M.run||{},T=M.totals||{},REL=M.reliability||{};
+const STATE={GERADOR_COMPROMETIDO:['GERADOR COMPROMETIDO','warn','O resultado não prova nada sobre o alvo.'],ALVO_SATURADO_CONFIRMADO:['ALVO SATURADO · confirmado','bad',''],ALVO_SATURADO_PROVAVEL:['ALVO SATURADO · provável','bad',''],CONECTIVIDADE_PROVAVEL:['CONECTIVIDADE / ROTA · provável','warn',''],SEM_SATURACAO:['SEM SATURAÇÃO observada','ok',''],INCONCLUSIVO:['INCONCLUSIVO','info',''],ABORTADO:['TESTE ABORTADO','info','']};
+const LAYER_PT={edge:'borda / LB / estático',app:'aplicação (sem banco)',db:'banco de dados',cache:'cache',queue:'fila',external:'serviço externo',unknown:'sem camada'};
+
+/* ===== gráficos de linha com cursor sincronizado ===== */
+const CHARTS=[];let CUR=null;
+function setCursor(t){CUR=t;CHARTS.forEach(c=>c.cursor(t));}
+function lineChart(host,o){
+ const Wd=Math.max(host.clientWidth||700,320),Ht=o.h||170,m={l:46,r:10,t:8,b:20};
+ const pw=Wd-m.l-m.r,ph=Ht-m.t-m.b;
+ const xmax=o.xmax||Math.max(1,...o.series.flatMap(s=>s.pts.map(p=>p[0])));
+ let ymax=o.ymax;if(ymax==null){ymax=Math.max(1e-9,...o.series.flatMap(s=>s.pts.map(p=>p[1]).filter(v=>v!=null)));ymax*=1.1;}
+ const X=x=>m.l+x/xmax*pw,Y=y=>m.t+ph-Math.min(y,ymax)/ymax*ph;
+ const ns='http://www.w3.org/2000/svg';const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 ${Wd} ${Ht}`);svg.setAttribute('width','100%');svg.style.display='block';
+ const add=(t,a,txt)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;svg.appendChild(e);return e;};
+ for(let i=0;i<=4;i++){const y=ymax*i/4;add('line',{x1:m.l,x2:Wd-m.r,y1:Y(y),y2:Y(y),stroke:'var(--line)','stroke-width':1});add('text',{x:m.l-5,y:Y(y)+3,'text-anchor':'end'},(o.yfmt||f1)(y));}
+ const step=[1,2,5,10,15,30,60,120,300,600,1800].find(s=>xmax/s<=10)||3600;
+ for(let x=0;x<=xmax;x+=step)add('text',{x:X(x),y:Ht-5,'text-anchor':'middle'},x+'s');
+ (o.shade||[]).forEach(([a,b,c])=>add('rect',{x:X(a),y:m.t,width:Math.max(1,X(b)-X(a)),height:ph,fill:c==='bad'?'var(--bad)':'var(--warn)',opacity:c==='bad'?.13:.10}));
+ (o.marks||[]).forEach(mk=>{add('line',{x1:X(mk.x),x2:X(mk.x),y1:m.t,y2:m.t+ph,stroke:'var(--bad)','stroke-dasharray':'4 3'});add('text',{x:X(mk.x)+3,y:m.t+10,fill:'var(--bad)',style:'fill:var(--bad)'},mk.l);});
+ const maps=[];
+ o.series.forEach((s,i)=>{const mp=new Map(s.pts);maps.push(mp);let d='',pen=false;for(const [x,y] of s.pts){if(y==null){pen=false;continue;}d+=(pen?'L':'M')+X(x).toFixed(1)+' '+Y(y).toFixed(1);pen=true;}
+  add('path',{d,fill:'none',stroke:s.c||col(i),'stroke-width':s.w||1.6,'stroke-dasharray':s.dash||'','stroke-linejoin':'round'});});
+ const cur=add('line',{x1:0,x2:0,y1:m.t,y2:m.t+ph,stroke:'var(--tx)',opacity:0,'stroke-width':1});
+ const ov=add('rect',{x:m.l,y:m.t,width:pw,height:ph,fill:'transparent'});
+ const leg=h('div',{class:'legend'});const vals=o.series.map((s,i)=>{const b=h('b',null,'—');leg.append(h('span',null,h('i',{class:'sw',style:`background:${s.c||col(i)}`}),s.n+' ',b));return b;});
+ const ttl=h('div',{class:'row',style:'justify-content:space-between'},h('h3',{style:'margin:8px 0 2px'},o.title),o.note?h('span',{class:'sub'},o.note):null);
+ const api={cursor(t){if(t==null){cur.setAttribute('opacity',0);return;}cur.setAttribute('x1',X(t));cur.setAttribute('x2',X(t));cur.setAttribute('opacity',.6);
+   o.series.forEach((s,i)=>{const v=maps[i].get(t);vals[i].textContent=v==null?'—':(s.fmt||o.yfmt||f1)(v);});}};
+ ov.addEventListener('mousemove',e=>{const r=svg.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*Wd;setCursor(Math.max(0,Math.min(xmax,Math.round((x-m.l)/pw*xmax))));});
+ ov.addEventListener('mouseleave',()=>setCursor(null));
+ host.replaceChildren(ttl,leg,svg);CHARTS.push(api);return api;
+}
+
+/* ===== seções ===== */
+const app=$('#app');
+function header(){
+ const k=KIND[M.provenance]||KIND.measured;
+ app.append(h('div',{class:'row',style:'justify-content:space-between'},
+  h('div',null,h('h1',null,'Sentinela · '+(R.name||'')),h('div',{class:'sub'},`execução ${R.id||'—'} · ${R.started_at||''} → ${R.ended_at||''} · ${R.duration_actual_s??'—'}s (planejado ${R.duration_planned_s??'—'}s) · alvo ${R.target||'—'}`)),
+  h('div',{class:'row'},chip(M.provenance),h('span',{class:'chip '+(R.status==='completed'?'ok':R.status==='failed'?'bad':'warn')},'STATUS: '+(R.status||'—').toUpperCase()),
+   h('button',{onclick:()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==='light'?'dark':'light';location.hash='';renderCharts();}},'◐ tema'))));
+ if(M.provenance==='demo')app.append(h('div',{class:'banner'},'◇ DEMONSTRAÇÃO — dados SINTÉTICOS gerados para mostrar a interface. Não representam nenhum sistema real.'));
+ if(M.provenance==='ingested')app.append(h('div',{class:'banner',style:'border-color:var(--info);color:var(--info)'},'↧ DADOS IMPORTADOS de outra ferramenta — sem telemetria do gerador; o veredito sobre o alvo é limitado.'));
+ if(R.abort_reason)app.append(h('div',{class:'card',style:'border-color:var(--warn)'},h('b',{class:'warn'},'Por que isto parou: '),R.abort_reason));
+}
+function verdict(){
+ const st=STATE[V.state]||[V.state,'info',''];
+ const c=h('div',{class:'card verdict '+V.state});
+ c.append(h('div',{class:'row'},h('span',{class:'chip '+st[1]},st[0]),h('span',{class:'sub'},'confiança: '+(V.confidence||'—')),
+  h('span',{class:'sub'},'onde: '+(V.location||'—')),V.generator_ok===false?h('span',{class:'chip warn'},'⚠ gerador comprometido'):V.generator_ok?h('span',{class:'chip ok'},'✓ geradores íntegros em '+f1(V.trusted_pct)+'% das janelas'):h('span',{class:'chip info'},'gerador não medido')));
+ c.append(h('p',{class:'big'},V.headline||''));
+ if(V.how_to_read)c.append(h('p',{class:'sub'},V.how_to_read));
+ if(V.generator_consequence)c.append(h('p',{class:'sub'},'ℹ O gerador degradou DEPOIS do alvo e por efeito dele (conexões/portas/descartes): consequência, não causa.'));
+ app.append(c);
+}
+function kpis(){
+ const cap=V.capacity||{};const g=REL.planned_vs_generated||{};
+ const items=[
+  ['Capacidade validada',cap.validated!=null?f1(cap.validated)+' req/s':'—',V.knee?'medida, antes do joelho':'≥ (limite não achado)','measured'],
+  ['Pico efetivo',f1(Math.max(0,...(M.series||[]).map(s=>s.ok)))+' req/s','por segundo, medido','measured'],
+  ['P95 / P99 (merge)',fms(T.p95)+' / '+fms(T.p99),'histogramas somados','measured'],
+  ['Erros',fpc(T.err_rate),f1(T.err)+' de '+f1(T.sent),'measured'],
+  ['Iterações descartadas',f1((T.drop_sched||0)+(T.drop_cap||0)),(T.drop_sched||0)+' gerador · '+(T.drop_cap||0)+' teto de VUs','measured'],
+  ['Carga gerada vs planejada',g.generated_pct!=null?f1(g.generated_pct)+'%':'—',(M.infra.num_workers_effective??'—')+'/'+(M.infra.num_workers_planned??'—')+' workers','measured']];
+ const gr=h('div',{class:'grid g6'});items.forEach(i=>gr.append(h('div',{class:'kpi'},h('span',null,i[0]),h('b',null,i[1]),h('span',null,i[2]+' '),chip(M.provenance==='demo'?'demo':i[3]))));
+ app.append(gr);
+}
+function suspects(){
+ const c=h('div',{class:'card'},h('h2',null,'Perícia — de quem é a limitação?'),h('div',{class:'sub'},'Pontuação 0–100 por evidência diferencial (não é probabilidade). Sem evidência = fica baixo. Tipo: '),);
+ c.lastChild.append(chip('estimated'));
+ (V.suspects||[]).forEach(s=>{
+  const color=s.score>=60?'var(--bad)':s.score>=30?'var(--warn)':'var(--line)';
+  c.append(h('div',{class:'sus'},h('div',null,s.layer),h('div',{class:'bar'},h('i',{style:`width:${s.score}%;background:${color}`})),h('b',null,s.score)));
+  if(s.evidence.length||s.against.length){const d=h('details',null,h('summary',null,'evidências e como confirmar'));
+   d.append(h('ul',null,s.evidence.map(x=>h('li',{class:'bad'},'a favor: '+x)),s.against.map(x=>h('li',{class:'ok'},'contra: '+x)),h('li',{class:'mut'},'confirmar: '+s.confirm)));c.append(d);}});
+ if((V.evidence||[]).length){c.append(h('h3',null,'Evidências globais'));c.append(h('ul',null,V.evidence.map(e=>h('li',null,chip(e.kind),' '+e.txt))));}
+ const sg=V.signals||{};
+ c.append(h('div',{class:'sub'},`Sinais: TTFB ×${sg.ttfb_ratio??'—'} · connect ×${sg.conn_ratio??'—'} · canário ${sg.canary_failed?'falhou':'×'+(sg.canary_ratio??'—')} · erros 429/5xx ${fpc(sg.overload_err_share)} · timeouts ${fpc(sg.timeout_err_share)}`));
+ app.append(c);
+}
+function topology(){
+ const ws=M.infra.workers||[];if(!ws.length)return;
+ const integ=Object.fromEntries((M.integrity||[]).map(i=>[i.id,i]));
+ const Wd=Math.max(app.clientWidth-30,320),rowH=44,H=Math.max(190,ws.length*rowH+30);
+ const ns='http://www.w3.org/2000/svg';const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 ${Wd} ${H}`);svg.setAttribute('width','100%');
+ const A=(t,a,txt,p)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;(p||svg).appendChild(e);return e;};
+ const box=(x,y,w,hh,stroke,fill)=>A('rect',{x,y,width:w,height:hh,rx:7,fill:fill||'var(--panel2)',stroke,'stroke-width':1.5});
+ const cx=70,wx=Wd*.36,tx=Wd*.74;
+ box(cx-60,H/2-24,120,48,'var(--info)');A('text',{x:cx,y:H/2-3,'text-anchor':'middle',style:'fill:var(--tx);font-weight:700;font-size:12px'},'Controlador');A('text',{x:cx,y:H/2+12,'text-anchor':'middle'},'orquestra · agrega');
+ const L=V.layers||{};const lk=Object.keys(L);const layers=lk.length?lk:['alvo'];
+ const th=Math.max(60,layers.length*30+30),ty=H/2-th/2;
+ const tdeg=layers.some(k=>L[k]&&L[k].degraded);
+ box(tx-10,ty,Wd-tx-6,th,tdeg?'var(--bad)':'var(--ok)');A('text',{x:tx,y:ty+16,style:'fill:var(--tx);font-weight:700;font-size:12px'},'Sistema testado');
+ layers.forEach((k,i)=>{const d=L[k]&&L[k].degraded;A('text',{x:tx,y:ty+34+i*28,style:`fill:var(${d?'--bad':'--ok'})`},(d?'✖ ':'✔ ')+(LAYER_PT[k]||k)+(L[k]?` ×${L[k].max_ratio}`:''));});
+ ws.forEach((w,i)=>{const y=15+i*rowH,i2=integ[w.id]||{};const bad=i2.compromised_s>0,down=w.status&&w.status!=='ok';
+  const sc=down?'var(--bad)':bad?'var(--warn)':'var(--ok)';
+  A('path',{d:`M${cx+60} ${H/2} C ${cx+130} ${H/2}, ${wx-80} ${y+17}, ${wx} ${y+17}`,fill:'none',stroke:'var(--line)'});
+  A('path',{d:`M${wx+150} ${y+17} C ${wx+200} ${y+17}, ${tx-60} ${H/2}, ${tx-10} ${H/2}`,fill:'none',stroke:sc,'stroke-width':1.3,opacity:.8});
+  box(wx,y,150,36,sc);A('text',{x:wx+8,y:y+15,style:'fill:var(--tx);font-weight:700;font-size:11.5px'},w.id+' · '+(w.region||'?'));
+  A('text',{x:wx+8,y:y+28},down?('✖ '+w.status):(bad?`⚠ ${f1(i2.integrity_pct)}% íntegro`:'✔ íntegro')+` · ${f1((w.share||0)*100)}% carga`);});
+ if(M.canary&&M.canary.length){A('text',{x:cx,y:H-6,'text-anchor':'middle',style:'fill:var(--info)'},'◌ canário independente → alvo');}
+ app.append(h('div',{class:'card'},h('h2',null,'Topologia'),h('div',{class:'sub'},'Borda colorida = estado (✔ íntegro · ⚠ limites violados · ✖ indisponível/degradado). Layout é ilustrativo; estados são medidos.'),svg));
+}
+let chartHost;
+function chartsSection(){
+ const c=h('div',{class:'card'},h('h2',null,'Séries temporais sincronizadas'),h('div',{class:'sub'},'Passe o mouse: o cursor vale para todos os gráficos. Faixa vermelha = gerador comprometido (amostra excluída do agregado limpo) · faixa âmbar = alvo degradado · linha tracejada = joelho.'));
+ chartHost=h('div');c.append(chartHost);app.append(c);renderCharts();
+}
+function bands(){
+ const sh=[];(M.windows||[]).forEach(w=>{if(w.trusted<0.9)sh.push([w.t0,w.t1,'bad']);else if(w.degraded)sh.push([w.t0,w.t1,'warn']);});
+ return {sh,marks:V.knee?[{x:V.knee.t,l:'joelho'}]:[]};
+}
+function renderCharts(){
+ if(!chartHost)return;CHARTS.length=0;chartHost.replaceChildren();
+ const S=M.series||[];if(!S.length){chartHost.append(h('p',{class:'sub'},'Sem séries (execução sem amostras).'));return;}
+ const b=bands(),xmax=S.length-1,P=(f)=>S.map(s=>[s.t,f(s)]);
+ const mk=(title,series,extra)=>{const d=h('div');chartHost.append(d);lineChart(d,Object.assign({title,series,xmax,shade:b.sh,marks:b.marks},extra||{}));};
+ mk(`Carga planejada × efetiva (${M.unit})`,[{n:'planejada',pts:P(s=>s.plan),c:'var(--mut)',dash:'5 4'},{n:'respostas ok/s',pts:P(s=>s.ok),c:'var(--c3)'},{n:'chegadas',pts:P(s=>s.arr||null),c:'var(--c1)',w:1},{n:'descartadas',pts:P(s=>(s.drop_sched+s.drop_cap)||null),c:'var(--c4)'}],{note:M.model==='open'?'modelo ABERTO: taxa de chegada':'modelo FECHADO: usuários virtuais (VUs não são RPS)'});
+ mk('Latência de resposta (percentis do merge de histogramas)',[{n:'P50',pts:P(s=>s.p50),fmt:fms},{n:'P90',pts:P(s=>s.p90),fmt:fms},{n:'P95',pts:P(s=>s.p95),fmt:fms},{n:'P99',pts:P(s=>s.p99),fmt:fms}],{yfmt:fms,note:'nunca média de percentis'});
+ mk('Latência limpa (P95 sem amostras de gerador comprometido) × TTFB × connect',[{n:'P95 limpo',pts:P(s=>s.cp95),fmt:fms},{n:'TTFB P95',pts:P(s=>s.ttfb_p95),fmt:fms},{n:'connect P95',pts:P(s=>s.conn_p95),fmt:fms},{n:'atraso do gerador P99',pts:P(s=>s.late_p99),fmt:fms,c:'var(--warn)'}],{yfmt:fms});
+ mk('Taxa de erro (%)',[{n:'erros %',pts:P(s=>s.sent?100*s.err/s.sent:null),c:'var(--bad)',fmt:v=>v.toFixed(1)+'%'}],{yfmt:v=>v.toFixed(0)+'%',h:130});
+ if((M.canary||[]).length)mk('Canário independente (sonda fora dos geradores)',[{n:'latência',pts:M.canary.filter(c=>c.ms!=null).map(c=>[Math.round(c.t),c.ms]),c:'var(--info)',fmt:fms}],{yfmt:fms,h:120,xmax});
+ // saúde por worker
+ const sel=h('select',{onchange:()=>{drawHealth();}},[['cpu_proc','CPU do processo (núcleos; 1,0 = teto)'],['cpu_sys','CPU do sistema (%)'],['mem','Memória (%)'],['lag99','Atraso do event loop P99 (ms)'],['late_p99','Envio atrasado vs. planejado P99 (ms)'],['conns','Conexões TCP do gerador'],['ports','Portas efêmeras (%)'],['fd','Descritores de arquivo (%)'],['rx_bps','Rede entrada (B/s)'],['tx_bps','Rede saída (B/s)'],['sent','RPS efetivo por worker'],['p95','P95 por worker (ms)']].map(([v,t])=>h('option',{value:v},t)));
+ const hh=h('div');chartHost.append(h('div',{class:'row',style:'margin-top:14px'},h('h3',{style:'margin:0'},'Saúde por gerador:'),sel),hh);
+ window.drawHealth=()=>{const key=sel.value,ws=M.workers_series||{};const ids=Object.keys(ws);
+  const d=h('div');hh.replaceChildren(d);
+  const lim={cpu_proc:.9,mem:92,ports:70,fd:80,lag99:25,late_p99:50,cpu_sys:90}[key];
+  const ser=ids.map((id,i)=>({n:id,pts:ws[id].map(a=>[a.t,a[key]]),c:col(i)}));
+  if(lim!=null)ser.push({n:'limite',pts:[[0,lim],[xmax,lim]],c:'var(--bad)',dash:'4 3',w:1});
+  lineChart(d,{title:sel.selectedOptions[0].textContent,series:ser,xmax,shade:b.sh,marks:b.marks,h:160,yfmt:key.endsWith('bps')?(v=>f1(v/1e3)+'k'):f1});};
+ drawHealth();
+}
+function workersTable(){
+ const ws=M.infra.workers||[];const integ=Object.fromEntries((M.integrity||[]).map(i=>[i.id,i]));const last={};
+ Object.entries(M.workers_series||{}).forEach(([id,a])=>{const done=a.filter(x=>x.sent>0);last[id]=a;});
+ const rows=ws.map(w=>{const i=integ[w.id]||{},a=(M.workers_series||{})[w.id]||[];const sent=a.reduce((s,x)=>s+x.sent,0),err=a.reduce((s,x)=>s+x.err,0);
+  const secs=a.filter(x=>x.sent>0).length||1;const p95=a.map(x=>x.p95).filter(Boolean).sort((x,y)=>x-y);
+  const ok=!w.status||w.status==='ok';
+  return h('tr',null,h('td',null,h('b',null,w.id),h('span',{class:'tag'},w.region||'?'),w.local?h('span',{class:'tag'},'local'):null),
+   h('td',{class:ok?(i.compromised_s?'warn':'ok'):'bad'},ok?(i.compromised_s?'⚠ limites violados':'✔ íntegro'):'✖ '+w.status),h('td',null,f1((w.share||0)*100)+'%'),h('td',null,f1(sent/secs)),h('td',null,fpc(sent?err/sent:null)),
+   h('td',null,fms(p95.length?p95[Math.floor(p95.length/2)]:null)),h('td',null,f1(i.cpu_proc_max)),h('td',null,i.cpu_sys_max==null?'n/a':f1(i.cpu_sys_max)+'%'),h('td',null,i.mem_max==null?'n/a':f1(i.mem_max)+'%'),
+   h('td',null,i.ports_max==null?'n/a':f1(i.ports_max)+'%'),h('td',null,i.fd_max==null?'n/a':f1(i.fd_max)+'%'),h('td',null,f1(i.lag99_max)),h('td',null,f1(i.integrity_pct)+'%'),h('td',{class:'warn',style:'text-align:left;white-space:normal'},Object.keys(i.violations||{}).join(', ')||'—'));});
+ const c=h('div',{class:'card'},h('h2',null,'Geradores (workers)'),h('div',{class:'sub'},'"n/a" = a plataforma do worker não expõe a métrica (nunca inventada). '),h('div',{class:'scroll'},h('table',null,
+  h('thead',null,h('tr',null,...['Worker','Estado','Carga','RPS médio','Erros','P95 mediano','CPU proc máx','CPU sist. máx','RAM máx','Portas máx','FD máx','Lag P99 máx (ms)','Íntegro','Violações'].map(x=>h('th',null,x)))),h('tbody',null,rows))));
+ c.firstChild.nextSibling.append(chip('measured'));app.append(c);
+}
+function endpointsSection(){
+ const E=M.endpoints||[];if(!E.length)return;
+ const rows=E.map((e,i)=>h('tr',null,h('td',null,h('b',null,e.name)),h('td',null,h('span',{class:'tag'},e.layer)),h('td',null,f1(e.n)),h('td',{class:(e.err_rate||0)>0.02?'bad':''},fpc(e.err_rate)),h('td',null,fms(e.p50)),h('td',null,fms(e.p90)),h('td',null,fms(e.p95)),h('td',null,fms(e.p99)),
+  h('td',null,fms(e.base_p95)),h('td',null,fms(e.degraded_p95)),h('td',{class:(e.ratio||0)>=2.5?'bad':''},e.ratio?'×'+e.ratio:'—'),h('td',{style:'text-align:left;white-space:normal'},Object.entries(e.errs||{}).map(([k,v])=>k+':'+v).join(' ')||'—')));
+ const c=h('div',{class:'card'},h('h2',null,'Endpoints — erros e latência por camada'),h('div',{class:'sub'},'"×" compara o P95 pós-joelho com o P95 de baixa carga (só amostras limpas). Sentinela estável + endpoint degradado = a camada culpada.'),
+  h('div',{class:'scroll'},h('table',null,h('thead',null,h('tr',null,...['Endpoint','Camada','Req','Erros','P50','P90','P95','P99','P95 base','P95 degradado','Razão','Tipos de erro'].map(x=>h('th',null,x)))),h('tbody',null,rows))));
+ const L=V.layers||{};if(Object.keys(L).length){c.append(h('h3',null,'Diagnóstico diferencial por camada'));Object.entries(L).forEach(([k,v])=>{c.append(h('div',{class:'sus'},h('div',null,(LAYER_PT[k]||k)),h('div',{class:'bar'},h('i',{style:`width:${Math.min(100,v.max_ratio*10)}%;background:${v.degraded?'var(--bad)':'var(--ok)'}`})),h('b',null,'×'+v.max_ratio)));});}
+ app.append(c);
+}
+function regionsSection(){
+ const Rg=M.regions||[];if(Rg.length<1)return;
+ const rows=Rg.map(r=>h('tr',null,h('td',null,h('b',null,r.region)),h('td',null,r.workers.join(', ')),h('td',null,f1(r.n)),h('td',null,fpc(r.err_rate)),h('td',null,fms(r.rtt_baseline_ms)),h('td',null,fms(r.conn_p95)),h('td',null,fms(r.ttfb_p95)),h('td',null,fms(r.p50)),h('td',null,fms(r.p95)),h('td',null,fms(r.p99))));
+ const c=h('div',{class:'card'},h('h2',null,'Comparação entre regiões'),h('div',{class:'scroll'},h('table',null,h('thead',null,h('tr',null,...['Região','Workers','Req','Erros','RTT base','connect P95','TTFB P95','P50','P95','P99'].map(x=>h('th',null,x)))),h('tbody',null,rows))));
+ if(Rg.length>1){const d=h('div');c.append(d);const S=M.series||[];lineChart(d,{title:'P95 por região (histogramas por região)',series:Rg.map((r,i)=>({n:r.region,pts:r.series.map(p=>[p.t,p.p95]),c:col(i),fmt:fms})),yfmt:fms,xmax:S.length-1,h:150,shade:bands().sh,marks:bands().marks});}
+ app.append(c);
+}
+function capacitySection(){
+ const cap=V.capacity||{},cr=M.criteria||{items:[]};
+ const c=h('div',{class:'card'},h('h2',null,'Capacidade máxima validada e critérios'));
+ c.append(h('p',{class:'big'},cap.validated!=null?`${f1(cap.validated)} req/s sustentados com gerador íntegro e sem degradação`:'Capacidade não determinada'),h('p',{class:'sub'},cap.note||''),chip('measured'));
+ if(V.knee)c.append(h('p',null,`Joelho: t=${V.knee.t}s · carga ${V.knee.plan} ${M.unit} · P95 limpo ${fms(V.knee.p95)} · erro ${fpc(V.knee.err_rate)}`));
+ if(cr.items.length){c.append(h('h3',null,'Critérios de aprovação'+(cr.passed===true?' — ✅ APROVADO':cr.passed===false?' — ❌ REPROVADO':' — ⚪ NÃO CONCLUSIVO')));
+  c.append(h('ul',null,cr.items.map(i=>h('li',{class:i.ok?'ok':'bad'},`${i.ok?'✔':'✖'} ${i.label}: ${i.value} (limite ${i.limit})`+(i.trusted?'':' — não confiável: gerador comprometido')))));if(cr.note)c.append(h('p',{class:'warn'},cr.note));}
+ else c.append(h('p',{class:'sub'},'Nenhum critério de aprovação configurado (criteria.pass).'));
+ const b=M.baseline||{};c.append(h('p',{class:'sub'},`Linha de base: P95 ${fms(b.p95_ms)} · erro ${fpc(b.err_rate)} · qualidade: ${b.quality||'—'} · limiar de degradação ${fms(b.lat_threshold_ms)}`));
+ if(M.calibration)c.append(h('p',{class:'sub'},`Régua (calibração): teto do gerador ≈ ${f1(M.calibration.ceiling_rps)} rps · seguro ≤ ${f1(M.calibration.safe_rps)} rps (estimado, 70%) · ${M.calibration.caveat}`));
+ app.append(c);
+}
+function recsSection(){
+ const c=h('div',{class:'card'},h('h2',null,'Recomendações priorizadas por impacto'));
+ (M.recommendations||[]).forEach(r=>c.append(h('div',{class:'rec'},h('div',{class:'n'},r.priority),h('div',null,h('b',null,r.title),h('span',{class:'tag'},r.layer+' · impacto '+r.impact),h('div',{class:'sub'},r.why),h('div',null,'→ '+r.action)))));
+ app.append(c);
+}
+function tenantsSection(){
+ const t=M.tenants;if(!t)return;
+ const rows=t.worst_p95.map(x=>h('tr',null,h('td',null,x.tenant),h('td',null,f1(x.n)),h('td',null,fpc(x.err_rate)),h('td',null,fms(x.p50)),h('td',null,fms(x.p95)),h('td',null,fms(x.p99))));
+ app.append(h('div',{class:'card'},h('h2',null,'Multi-tenant'),h('div',{class:'sub'},`${t.count} tenants observados · P95 mediano ${fms(t.median_p95)} · pior/mediana ×${t.spread??'—'} · tenant mais quente = ${fpc(t.top_share)} do tráfego`),
+  h('h3',null,'Tenants com pior P95 (sinal de vizinho barulhento se ≫ mediana)'),h('div',{class:'scroll'},h('table',null,h('thead',null,h('tr',null,...['Tenant','Req','Erros','P50','P95','P99'].map(x=>h('th',null,x)))),h('tbody',null,rows)))));
+}
+function reliabilitySection(){
+ const pg=REL.planned_vs_generated||{},inf=M.infra||{};
+ const c=h('div',{class:'card'},h('h2',null,'Confiabilidade dos resultados'));
+ const kv=[['Versão do app testado',R.app_version||'não informada'],['Versão dos scripts',R.script_version||'não informada'],['Ferramenta',R.tool],['Ambiente',R.environment||'—'],['Início → fim',`${R.started_at} → ${R.ended_at}`],['Duração real / planejada',`${R.duration_actual_s}s / ${R.duration_planned_s}s`],
+  ['Geradores planejados / efetivos',`${inf.num_workers_planned??'—'} / ${inf.num_workers_effective??'—'}`],['Planejado vs gerado',JSON.stringify(pg)],['Amostras perdidas',REL.lost_pct==null?'n/a':REL.lost_pct+'%'],['Config (hash)',R.config_hash||'—'],['Infra / notas',inf.infra_notes||'—'],['Relógios',JSON.stringify((REL.clock||{}).offsets_ms||{})+' ms de offset (alinhados antes do início)'],['Rede (RTT base)',JSON.stringify(REL.network||{})]];
+ c.append(h('div',{class:'scroll'},h('table',null,h('tbody',null,kv.map(([k,v])=>h('tr',null,h('td',null,k),h('td',{style:'text-align:left;white-space:normal'},String(v))))))));
+ c.append(h('h3',null,'Limitações e interferências observadas'),h('ul',null,(REL.limitations||[]).map(x=>h('li',null,x))));
+ c.append(h('h3',null,'Linha do tempo de eventos'),h('ul',null,((R.events)||[]).map(e=>h('li',{class:e.level==='error'?'bad':e.level==='warn'?'warn':''},`t=${e.t}s [${e.level}] ${e.msg}`))));
+ c.append(h('h3',null,'Classificação dos dados'),h('div',{class:'row'},chip('measured'),h('span',{class:'sub'},'coletado pelos workers'),chip('estimated'),h('span',{class:'sub'},'inferido (camada culpada, teto seguro, portas sem /proc)'),chip('demo'),h('span',{class:'sub'},'sintético, só para mostrar a UI')));
+ app.append(c);
+}
+function downloads(){
+ const dl=(name,txt,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=name;a.click();};
+ const csv=()=>{const cols=['t','plan','arr','sent','ok','err','drop_cap','drop_sched','p50','p90','p95','p99','cp95','ttfb_p95','conn_p95','late_p99'];return cols.join(',')+'\n'+(M.series||[]).map(s=>cols.map(c=>s[c]??'').join(',')).join('\n');};
+ app.append(h('div',{class:'card'},h('h2',null,'Dados brutos'),h('div',{class:'row'},h('button',{onclick:()=>dl('metrics.json',JSON.stringify(M,null,1),'application/json')},'⬇ metrics.json'),h('button',{onclick:()=>dl('timeseries.csv',csv(),'text/csv')},'⬇ timeseries.csv'),h('button',{onclick:()=>dl('config.json',JSON.stringify(M.config,null,2),'application/json')},'⬇ config reproduzível')),
+  h('p',{class:'sub'},'Este arquivo é autocontido (sem rede, sem CDN). O relatório técnico completo está em report.md ao lado.')));
+}
+if(!M){app.append(h('p',null,'Sem dados embutidos.'));}else{
+ header();verdict();kpis();suspects();topology();chartsSection();workersTable();endpointsSection();regionsSection();capacitySection();recsSection();tenantsSection();reliabilitySection();downloads();
+ let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(renderCharts,200);});
+}
+</script>
+</body>
+</html>
